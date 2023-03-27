@@ -67,15 +67,15 @@ end
 function NetworkUtil.onClientEventAt(key: string, parent: Instance, func: (...any) -> nil): Maid
 	assert(RunService:IsClient())
 	local _maid = _Maid.new()
-	if RunService:IsRunning() then
-		local remEv = NetworkUtil.getRemoteEvent(key, parent)
-		_maid:GiveTask(remEv.OnClientEvent:Connect(func))
-	else
-		local binEv = NetworkUtil.getBindableEvent(key, parent)
-		_maid:GiveTask(binEv.Event:Connect(function(player: Player, ...)
-			return func(...)
-		end))
-	end
+	-- if RunService:IsRunning() then
+	local remEv = NetworkUtil.getRemoteEvent(key, parent)
+	_maid:GiveTask(remEv.OnClientEvent:Connect(func))
+	-- else
+	-- 	local binEv = NetworkUtil.getBindableEvent(key, parent)
+	-- 	_maid:GiveTask(binEv.Event:Connect(function(player: Player, ...)
+	-- 		return func(...)
+	-- 	end))
+	-- end
 	return _maid
 end
 
@@ -86,15 +86,15 @@ end
 function NetworkUtil.onServerEventAt(key: string, parent: Instance, func: (...any) -> nil): Maid
 	assert(RunService:IsServer())
 	local _maid = _Maid.new()
-	if RunService:IsRunning() then
-		local remEv = NetworkUtil.getRemoteEvent(key, parent)
-		_maid:GiveTask(remEv.OnServerEvent:Connect(func))
-	else
-		local binEv = NetworkUtil.getBindableEvent(key, parent)
-		_maid:GiveTask(binEv.Event:Connect(function(...)
-			func(nil, ...)
-		end))
-	end
+	-- if RunService:IsRunning() then
+	local remEv = NetworkUtil.getRemoteEvent(key, parent)
+	_maid:GiveTask(remEv.OnServerEvent:Connect(func))
+	-- else
+	-- 	local binEv = NetworkUtil.getBindableEvent(key, parent)
+	-- 	_maid:GiveTask(binEv.Event:Connect(function(...)
+	-- 		func(nil, ...)
+	-- 	end))
+	-- end
 	return _maid
 end
 
@@ -104,13 +104,13 @@ end
 
 function NetworkUtil.fireServerAt(key: string, parent: Instance, ...): nil
 	assert(RunService:IsClient())
-	if RunService:IsRunning() then
-		local remEv = NetworkUtil.getRemoteEvent(key, parent)
-		remEv:FireServer(...)
-	else
-		local binEv = NetworkUtil.getBindableEvent(key, parent)
-		binEv:Fire(...)
-	end
+	-- if RunService:IsRunning() then
+	local remEv = NetworkUtil.getRemoteEvent(key, parent)
+	remEv:FireServer(...)
+	-- else
+	-- 	local binEv = NetworkUtil.getBindableEvent(key, parent)
+	-- 	binEv:Fire(...)
+	-- end
 	return nil
 end
 
@@ -120,13 +120,13 @@ end
 
 function NetworkUtil.fireClientAt(key: string, parent: Instance, ...): nil
 	assert(RunService:IsServer())
-	if RunService:IsRunning() then
-		local remEv = NetworkUtil.getRemoteEvent(key, parent)
-		remEv:FireClient(...)
-	else
-		local binEv = NetworkUtil.getBindableEvent(key, parent)
-		binEv:Fire(...)
-	end
+	-- if RunService:IsRunning() then
+	local remEv = NetworkUtil.getRemoteEvent(key, parent)
+	remEv:FireClient(...)
+	-- else
+	-- 	local binEv = NetworkUtil.getBindableEvent(key, parent)
+	-- 	binEv:Fire(...)
+	-- end
 	return nil
 end
 
@@ -136,13 +136,13 @@ end
 
 function NetworkUtil.fireAllClientsAt(key: string, parent: Instance, ...): nil
 	assert(RunService:IsServer())
-	if RunService:IsRunning() then
-		local remEv = NetworkUtil.getRemoteEvent(key, parent)
-		remEv:FireAllClients(...)
-	else
-		local binEv = NetworkUtil.getBindableEvent(key, parent)
-		binEv:Fire(nil, ...)
-	end
+	-- if RunService:IsRunning() then
+	local remEv = NetworkUtil.getRemoteEvent(key, parent)
+	remEv:FireAllClients(...)
+	-- else
+	-- 	local binEv = NetworkUtil.getBindableEvent(key, parent)
+	-- 	binEv:Fire(nil, ...)
+	-- end
 	return nil
 end
 
@@ -152,13 +152,13 @@ end
 
 function NetworkUtil.invokeServerAt<G>(key: string, parent: Instance, ...): G
 	assert(RunService:IsClient())
-	if RunService:IsRunning() then
-		local remFun = NetworkUtil.getRemoteFunction(key, parent)
-		return remFun:InvokeServer(...)
-	else
-		local binFun = NetworkUtil.getBindableFunction(key, parent)
-		return binFun:Invoke(...)
-	end
+	-- if RunService:IsRunning() then
+	local remFun = NetworkUtil.getRemoteFunction(key, parent)
+	return remFun:InvokeServer(...)
+	-- else
+	-- 	local binFun = NetworkUtil.getBindableFunction(key, parent)
+	-- 	return binFun:Invoke(...)
+	-- end
 end
 
 function NetworkUtil.invokeServer<G>(key: string, ...): G
@@ -168,13 +168,13 @@ end
 
 function NetworkUtil.invokeClientAt<G>(key: string, parent: Instance, ...): G
 	assert(RunService:IsServer())
-	if RunService:IsRunning() then
-		local remFun = NetworkUtil.getRemoteFunction(key, parent)
-		return remFun:InvokeClient(...)
-	else
-		local binFun = NetworkUtil.getBindableFunction(key, parent)
-		return binFun:Invoke(...)
-	end
+	-- if RunService:IsRunning() then
+	local remFun = NetworkUtil.getRemoteFunction(key, parent)
+	return remFun:InvokeClient(...)
+	-- else
+	-- 	local binFun = NetworkUtil.getBindableFunction(key, parent)
+	-- 	return binFun:Invoke(...)
+	-- end
 end
 
 function NetworkUtil.invokeClient<G>(key: string, ...): G
@@ -183,15 +183,15 @@ end
 
 function NetworkUtil.onClientInvokeAt<G>(key: string, parent: Instance, func: (...any) -> G): nil
 	assert(RunService:IsClient())
-	if RunService:IsRunning() then
-		local remFun = NetworkUtil.getRemoteFunction(key, parent)
-		remFun.OnClientInvoke = func
-	else
-		local binFun = NetworkUtil.getBindableFunction(key, parent)
-		binFun.OnInvoke = function(player: Player, ...)
-			return func(...)
-		end
-	end
+	-- if RunService:IsRunning() then
+	local remFun = NetworkUtil.getRemoteFunction(key, parent)
+	remFun.OnClientInvoke = func
+	-- else
+	-- 	local binFun = NetworkUtil.getBindableFunction(key, parent)
+	-- 	binFun.OnInvoke = function(player: Player, ...)
+	-- 		return func(...)
+	-- 	end
+	-- end
 	return nil
 end
 
@@ -201,15 +201,15 @@ end
 
 function NetworkUtil.onServerInvokeAt<G>(key: string, parent: Instance, func: (...any) -> G): nil
 	assert(RunService:IsServer())
-	if RunService:IsRunning() then
-		local remFun = NetworkUtil.getRemoteFunction(key, parent)
-		remFun.OnServerInvoke = func
-	else
-		local binFun = NetworkUtil.getBindableFunction(key, parent)
-		binFun.OnInvoke = function(...)
-			return func(nil, ...)
-		end
-	end
+	-- if RunService:IsRunning() then
+	local remFun = NetworkUtil.getRemoteFunction(key, parent)
+	remFun.OnServerInvoke = func
+	-- else
+	-- 	local binFun = NetworkUtil.getBindableFunction(key, parent)
+	-- 	binFun.OnInvoke = function(...)
+	-- 		return func(nil, ...)
+	-- 	end
+	-- end
 	return nil
 end
 

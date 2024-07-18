@@ -1,17 +1,20 @@
 --!strict
-
-local Package = script
-local Packages = Package.Parent
+--!native
+local _Package = script
+local _Packages = _Package.Parent
+-- Services
 local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
-local _Maid = require(Packages.Maid)
-local _Signal = require(Packages.Signal)
-
-type Maid = _Maid.Maid
-
-local NetworkUtil = {}
-NetworkUtil.__index = NetworkUtil
-
+-- stylua: ignore start
+-- Packages
+local Maid = require(_Packages:WaitForChild("Maid"))
+-- Modules
+-- stylua: ignore end
+-- Types
+type Maid = Maid.Maid
+-- Constants
+-- Variables
+-- References
+-- Private Functions
 local function getInstance(key: string, className: string, parent: Instance): any
 	local cur = parent:FindFirstChild(key)
 	if cur then
@@ -28,10 +31,9 @@ local function getInstance(key: string, className: string, parent: Instance): an
 	end
 end
 
-function NetworkUtil.getIfPlayerInGame(player: Player): boolean
-	assert(RunService:IsServer())
-	return Players:FindFirstChild(player.Name) ~= nil
-end
+-- Interface
+local NetworkUtil = {}
+NetworkUtil.__index = NetworkUtil
 
 function NetworkUtil.getRemoteEvent(key: string, parent: Instance?): RemoteEvent
 	parent = parent or script
@@ -39,7 +41,21 @@ function NetworkUtil.getRemoteEvent(key: string, parent: Instance?): RemoteEvent
 	if RunService:IsServer() then
 		return getInstance(key, "RemoteEvent", parent)
 	else
-		return parent:WaitForChild(key) :: any
+		local inst = parent:WaitForChild(key)
+		assert(inst:IsA("RemoteEvent"))
+		return inst
+	end
+end
+
+function NetworkUtil.getUnreliableRemoteEvent(key: string, parent: Instance?): UnreliableRemoteEvent
+	parent = parent or script
+	assert(parent ~= nil)
+	if RunService:IsServer() then
+		return getInstance(key, "UnreliableRemoteEvent", parent)
+	else
+		local inst = parent:WaitForChild(key)
+		assert(inst:IsA("UnreliableRemoteEvent"))
+		return inst
 	end
 end
 
@@ -49,7 +65,9 @@ function NetworkUtil.getRemoteFunction(key: string, parent: Instance?): RemoteFu
 	if RunService:IsServer() then
 		return getInstance(key, "RemoteFunction", parent)
 	else
-		return parent:WaitForChild(key) :: any
+		local inst = parent:WaitForChild(key)
+		assert(inst:IsA("RemoteFunction"))
+		return inst
 	end
 end
 
@@ -65,158 +83,172 @@ function NetworkUtil.getBindableFunction(key: string, parent: Instance?): Bindab
 	return parent:FindFirstChild(key) or getInstance(key, "BindableFunction", parent)
 end
 
-function NetworkUtil.onClientEventAt(key: string, parent: Instance, func: (...any) -> nil): Maid
+function NetworkUtil.onClientEventAt(key: string, parent: Instance, func: (...unknown?) -> nil): () -> ()
 	assert(RunService:IsClient())
-	local _maid = _Maid.new()
-	-- if RunService:IsRunning() then
+	local maid = Maid.new()
 	local remEv = NetworkUtil.getRemoteEvent(key, parent)
-	_maid:GiveTask(remEv.OnClientEvent:Connect(func))
-	-- else
-	-- 	local binEv = NetworkUtil.getBindableEvent(key, parent)
-	-- 	_maid:GiveTask(binEv.Event:Connect(function(player: Player, ...)
-	-- 		return func(...)
-	-- 	end))
-	-- end
-	return _maid
+	maid:GiveTask(remEv.OnClientEvent:Connect(func))
+
+	return function()
+		maid:Destroy()
+	end
 end
 
-function NetworkUtil.onClientEvent(key: string, func: (...any) -> nil): Maid
+function NetworkUtil.onUnreliableClientEventAt(
+	key: string,
+	parent: Instance,
+	func: (...unknown?) -> nil
+): () -> ()
+	assert(RunService:IsClient())
+	local maid = Maid.new()
+	local remEv = NetworkUtil.getUnreliableRemoteEvent(key, parent)
+	maid:GiveTask(remEv.OnClientEvent:Connect(func))
+
+	return function()
+		maid:Destroy()
+	end
+end
+
+function NetworkUtil.onClientEvent(key: string, func: (...unknown?) -> nil): () -> ()
 	return NetworkUtil.onClientEventAt(key, script, func)
 end
 
-function NetworkUtil.onServerEventAt(key: string, parent: Instance, func: (...any) -> nil): Maid
-	assert(RunService:IsServer())
-	local _maid = _Maid.new()
-	-- if RunService:IsRunning() then
-	local remEv = NetworkUtil.getRemoteEvent(key, parent)
-	_maid:GiveTask(remEv.OnServerEvent:Connect(func))
-	-- else
-	-- 	local binEv = NetworkUtil.getBindableEvent(key, parent)
-	-- 	_maid:GiveTask(binEv.Event:Connect(function(...)
-	-- 		func(nil, ...)
-	-- 	end))
-	-- end
-	return _maid
+function NetworkUtil.onUnreliableClientEvent(key: string, func: (...unknown?) -> nil): () -> ()
+	return NetworkUtil.onUnreliableClientEventAt(key, script, func)
 end
 
-function NetworkUtil.onServerEvent(key: string, func: (...any) -> nil): Maid
+function NetworkUtil.onServerEventAt(key: string, parent: Instance, func: (...unknown?) -> nil): () -> ()
+	assert(RunService:IsServer())
+	local maid = Maid.new()
+	local remEv = NetworkUtil.getRemoteEvent(key, parent)
+	maid:GiveTask(remEv.OnServerEvent:Connect(func))
+
+	return function()
+		maid:Destroy()
+	end
+end
+
+function NetworkUtil.onUnreliableServerEventAt(
+	key: string,
+	parent: Instance,
+	func: (...unknown?) -> nil
+): () -> ()
+	assert(RunService:IsServer())
+	local maid = Maid.new()
+	local remEv = NetworkUtil.getUnreliableRemoteEvent(key, parent)
+	maid:GiveTask(remEv.OnServerEvent:Connect(func))
+
+	return function()
+		maid:Destroy()
+	end
+end
+
+function NetworkUtil.onServerEvent(key: string, func: (...unknown?) -> nil): () -> ()
 	return NetworkUtil.onServerEventAt(key, script, func)
 end
 
-function NetworkUtil.fireServerAt(key: string, parent: Instance, ...): nil
-	assert(RunService:IsClient())
-	-- if RunService:IsRunning() then
-	local remEv = NetworkUtil.getRemoteEvent(key, parent)
-	remEv:FireServer(...)
-	-- else
-	-- 	local binEv = NetworkUtil.getBindableEvent(key, parent)
-	-- 	binEv:Fire(...)
-	-- end
-	return nil
+function NetworkUtil.onUnreliableServerEvent(key: string, func: (...unknown?) -> nil): () -> ()
+	return NetworkUtil.onUnreliableServerEventAt(key, script, func)
 end
 
-function NetworkUtil.fireServer(key: string, ...): nil
+function NetworkUtil.fireServerAt(key: string, parent: Instance, ...): ()
+	assert(RunService:IsClient())
+	local remEv = NetworkUtil.getRemoteEvent(key, parent)
+	remEv:FireServer(...)
+end
+
+function NetworkUtil.fireServer(key: string, ...): ()
 	return NetworkUtil.fireServerAt(key, script, ...)
 end
 
-function NetworkUtil.fireClientAt(key: string, parent: Instance, ...): nil
+function NetworkUtil.fireUnreliableServerAt(key: string, parent: Instance, ...): ()
+	assert(RunService:IsClient())
+	local remEv = NetworkUtil.getUnreliableRemoteEvent(key, parent)
+	remEv:FireServer(...)
+end
+
+function NetworkUtil.fireUnreliableServer(key: string, ...): ()
+	return NetworkUtil.fireUnreliableServerAt(key, script, ...)
+end
+
+function NetworkUtil.fireClientAt(key: string, parent: Instance, ...): ()
 	assert(RunService:IsServer())
-	-- if RunService:IsRunning() then
 	local remEv = NetworkUtil.getRemoteEvent(key, parent)
 	remEv:FireClient(...)
-	-- else
-	-- 	local binEv = NetworkUtil.getBindableEvent(key, parent)
-	-- 	binEv:Fire(...)
-	-- end
-	return nil
 end
 
 function NetworkUtil.fireClient(key: string, ...): nil
 	return NetworkUtil.fireClientAt(key, script, ...)
 end
 
-function NetworkUtil.fireAllClientsAt(key: string, parent: Instance, ...): nil
+function NetworkUtil.fireUnreliableClientAt(key: string, parent: Instance, ...): ()
 	assert(RunService:IsServer())
-	-- if RunService:IsRunning() then
-	local remEv = NetworkUtil.getRemoteEvent(key, parent)
-	remEv:FireAllClients(...)
-	-- else
-	-- 	local binEv = NetworkUtil.getBindableEvent(key, parent)
-	-- 	binEv:Fire(nil, ...)
-	-- end
-	return nil
+	local remEv = NetworkUtil.getUnreliableRemoteEvent(key, parent)
+	remEv:FireClient(...)
 end
 
-function NetworkUtil.fireAllClients(key: string, ...): nil
+function NetworkUtil.fireUnreliableClient(key: string, ...): nil
+	return NetworkUtil.fireUnreliableClientAt(key, script, ...)
+end
+
+function NetworkUtil.fireAllClientsAt(key: string, parent: Instance, ...): ()
+	assert(RunService:IsServer())
+	local remEv = NetworkUtil.getRemoteEvent(key, parent)
+	remEv:FireAllClients(...)
+end
+
+function NetworkUtil.fireAllClients(key: string, ...): ()
 	return NetworkUtil.fireAllClientsAt(key, script, ...)
 end
 
-function NetworkUtil.invokeServerAt<G>(key: string, parent: Instance, ...): G
-	assert(RunService:IsClient())
-	-- if RunService:IsRunning() then
-	local remFun = NetworkUtil.getRemoteFunction(key, parent)
-	return remFun:InvokeServer(...)
-	-- else
-	-- 	local binFun = NetworkUtil.getBindableFunction(key, parent)
-	-- 	return binFun:Invoke(...)
-	-- end
+function NetworkUtil.fireAllUnreliableClientsAt(key: string, parent: Instance, ...): ()
+	assert(RunService:IsServer())
+	local remEv = NetworkUtil.getUnreliableRemoteEvent(key, parent)
+	remEv:FireAllClients(...)
 end
 
-function NetworkUtil.invokeServer<G>(key: string, ...): G
+function NetworkUtil.fireAllUnreliableClients(key: string, ...): ()
+	return NetworkUtil.fireAllUnreliableClientsAt(key, script, ...)
+end
+
+function NetworkUtil.invokeServerAt<V>(key: string, parent: Instance, ...): V
+	assert(RunService:IsClient())
+	local remFun = NetworkUtil.getRemoteFunction(key, parent)
+	return remFun:InvokeServer(...)
+end
+
+function NetworkUtil.invokeServer<V>(key: string, ...): V
 	return NetworkUtil.invokeServerAt(key, script, ...)
 end
 
-
-function NetworkUtil.invokeClientAt<G>(key: string, parent: Instance, ...): G
+function NetworkUtil.invokeClientAt<V>(key: string, parent: Instance, ...): V
 	assert(RunService:IsServer())
-	-- if RunService:IsRunning() then
 	local remFun = NetworkUtil.getRemoteFunction(key, parent)
 	return remFun:InvokeClient(...)
-	-- else
-	-- 	local binFun = NetworkUtil.getBindableFunction(key, parent)
-	-- 	return binFun:Invoke(...)
-	-- end
 end
 
-function NetworkUtil.invokeClient<G>(key: string, ...): G
+function NetworkUtil.invokeClient<V>(key: string, ...): V
 	return NetworkUtil.invokeClientAt(key, script, ...)
 end
 
-function NetworkUtil.onClientInvokeAt<G>(key: string, parent: Instance, func: (...any) -> G): nil
+function NetworkUtil.onClientInvokeAt<V>(key: string, parent: Instance, func: (...unknown?) -> V): ()
 	assert(RunService:IsClient())
-	-- if RunService:IsRunning() then
 	local remFun = NetworkUtil.getRemoteFunction(key, parent)
 	remFun.OnClientInvoke = func
-	-- else
-	-- 	local binFun = NetworkUtil.getBindableFunction(key, parent)
-	-- 	binFun.OnInvoke = function(player: Player, ...)
-	-- 		return func(...)
-	-- 	end
-	-- end
-	return nil
 end
 
-function NetworkUtil.onClientInvoke<G>(key: string, func: (...any) -> G): nil
+function NetworkUtil.onClientInvoke<V>(key: string, func: (...unknown?) -> V): nil
 	return NetworkUtil.onClientInvokeAt(key, script, func)
 end
 
-function NetworkUtil.onServerInvokeAt<G>(key: string, parent: Instance, func: (...any) -> G): nil
+function NetworkUtil.onServerInvokeAt<V>(key: string, parent: Instance, func: (...unknown?) -> V): ()
 	assert(RunService:IsServer())
-	-- if RunService:IsRunning() then
 	local remFun = NetworkUtil.getRemoteFunction(key, parent)
 	remFun.OnServerInvoke = func
-	-- else
-	-- 	local binFun = NetworkUtil.getBindableFunction(key, parent)
-	-- 	binFun.OnInvoke = function(...)
-	-- 		return func(nil, ...)
-	-- 	end
-	-- end
-	return nil
 end
 
-function NetworkUtil.onServerInvoke<G>(key: string, func: (...any) -> G): nil
+function NetworkUtil.onServerInvoke<V>(key: string, func: (...unknown?) -> V): ()
 	return NetworkUtil.onServerInvokeAt(key, script, func)
 end
-
 
 return NetworkUtil

@@ -1,9 +1,22 @@
-/src_old
-/wally.lock
-/package-lock.json
-Packages
-/.gitconfig
-/out
-/sourcemap.json
-sourcemap
+
+
+# Directories
+out/**
+Packages/**
+types
+lints
+tests/lsp/**
+tests/selene/**
+
+# Files
 sourcemap.json
+wally.lock
+package-lock.json
+keys.txt
+
+# File types
+*.lock
+*.gitconfig
+*.rbxlx
+*.lock
+

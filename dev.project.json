@@ -1,12 +1,12 @@
 {
-	"name": "network-util",
+	"name": "package",
 	"tree": {
 	  "$className": "DataModel",
 	  "ReplicatedStorage": {
 	    "$className": "ReplicatedStorage",
 	    "Packages": {
 		 "$path": "Packages",
-		 "synthetic": {
+		 "package": {
 		   "$path": "src"
 		 }
 	    }

@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-rojo build --output synthetic.rbxl dev.project.json
+rojo build --output network-util.rbxl dev.project.json
